@@ -145,7 +145,11 @@ client.on('message', async message => {
                     let items = [];
 
                     linksArr.forEach(link => {
-                        items.push({ "link": `${link}`, "collection": {"$id": catId} })
+
+                        let result = await getTitleByUrl(link);
+                        let pageTitle = result.ogTitle;   
+
+                        items.push({ "link": `${link}`, "title": `${pageTitle}`, "collection": {"$id": catId} })
                     });
 
                     body = {
