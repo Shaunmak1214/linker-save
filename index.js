@@ -114,7 +114,7 @@ client.on('message', async message => {
         let catdelimter2 = linkcat.indexOf(']');
 
         let categoryWTags = linkcat.slice(catdelimter1, catdelimter2 + 1);
-        let category = categoryWTags.slice(1, -1)
+        let category = categoryWTags.slice(1, -1).split(/\s+/).join('').toLowerCase()
 
         let links = linkcat.replace(categoryWTags, "").trim()
         let linksArr = links.split(/(\s+)/).filter( function(e) { return e.trim().length > 0; } );
@@ -131,7 +131,7 @@ client.on('message', async message => {
                 let catId = null;
                 let catTitle = null;
                 res.data.items.map(collection => {
-                    if(collection.title.toLowerCase().split(/\s+/).join('') === category.toLowerCase().split(/\s+/).join('')){
+                    if(collection.title.toLowerCase().split(/\s+/).join('') === category){
                         catTitle = collection.title
                         catId = collection._id;
                     }
