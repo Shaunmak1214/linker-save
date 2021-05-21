@@ -1,9 +1,27 @@
 let express = require('express');
 const axios = require('axios');
 const Discord = require('discord.js');
-const { prefix, RaindropBase } = require('./config.json');
 let bodyParser = require('body-parser');
 require('dotenv').config()
+
+const { prefix, RaindropBase } = require('./config.json');
+const { createUser, getAccessTokenViaDiscordId } = require('./controllers/user.controller');
+
+// Database
+const db = require('./config/database');
+
+// Database Authentication
+db.sync({ alter:true })
+.then((synched) => {
+    console.log(`${synched} All models were synchronized successfully.`)
+})
+.catch((err) => {
+    console.log(err)
+})
+
+db.authenticate()
+  .then(() => console.log('Database connected...'))
+  .catch(err => console.log('Error: ' + err))
 
 let app = express();
 
@@ -24,7 +42,7 @@ app.get('/auth/callback', async function(req, res) {
 
     var data = JSON.stringify(
         {
-            "grant_type":"authorization_code",
+            "grant_type": "authorization_code",
             "code": `${req.query.code}`,
             "client_id": "602ce67ff5b1b0e7483b1132",
             "client_secret": "7e9a5612-1c06-4dd8-9aa1-3544d2a37d09",
@@ -82,60 +100,124 @@ client.on("ready", () =>{
 
 client.on('message', async message => {
     if(message.content.startsWith(`${prefix}s`)){
-        if(message.author.id === '312970409932881921'){
-            let linkcat = message.content.substring(2).trim();
-            linkcat = linkcat.split(" ");
 
-            axios.get(`${RaindropBase}collections`, {
-                headers: { 
-                    'Authorization': 'Bearer 2d9e74ad-649f-42c5-b1a6-3bbdba862d65', 
-                }
-            })
-                .then((res) => {
-                    let catId = null;
-                    res.data.items.map(collection => {
-                        if(collection.title.toLowerCase() === linkcat[0]){
-                            catId = collection._id;
-                        }
+        let access_token = await getAccessTokenViaDiscordId(message.author.id)
+        if(!access_token){
+            let text = "You're not authenticated, go to this link ( https://raindrop.io/oauth/authorize?redirect_uri=https://linksaverbot.herokuapp.com/auth/callback&client_id=602ce67ff5b1b0e7483b1132 ) to obtain your access token, then `token [your_access_token] to set your token to be authenticated";
+            sendMessagePrivately(message.author.id, text)
+            return;
+        }
+
+        let linkcat = message.content.substring(2).trim();
+
+        let catdelimter1 = linkcat.indexOf('[');
+        let catdelimter2 = linkcat.indexOf(']');
+
+        let categoryWTags = linkcat.slice(catdelimter1, catdelimter2 + 1);
+        let category = categoryWTags.slice(1, -1)
+
+        let links = linkcat.replace(categoryWTags, "").trim()
+        let linksArr = links.split(/(\s+)/).filter( function(e) { return e.trim().length > 0; } );
+
+        /* console.log(category)
+        console.log(linksArr) */
+
+        axios.get(`${RaindropBase}collections`, {
+            headers: { 
+                'Authorization': `Bearer ${access_token}`, 
+            }
+        })
+            .then((res) => {
+                let catId = null;
+                let catTitle = null;
+                res.data.items.map(collection => {
+                    if(collection.title.toLowerCase().split(/\s+/).join('') === category.toLowerCase()){
+                        catTitle = collection.title
+                        catId = collection._id;
+                    }
+                });
+
+                let body = null;
+                let route = null;
+
+                if(linksArr.length > 1){
+
+                    let items = [];
+
+                    linksArr.forEach(link => {
+                        items.push({ "link": `${link}`, "collection": {"$id": catId} })
                     });
-                    
-                    let body = {
-                        "link": `${linkcat[1]}`,
+
+                    body = {
+                        items: items,
+                    }
+
+                    route = 'raindrops'
+                }else{
+                    body = {
+                        "link": `${linksArr[0]}`,
                         "collection": {
                             "$id": catId
                         }
                     }
-                    body = JSON.stringify(body);
 
-                    var config = {
-                        method: 'post',
-                        url: `${RaindropBase}raindrop`,
-                        headers: { 
-                          'Authorization': 'Bearer 2d9e74ad-649f-42c5-b1a6-3bbdba862d65', 
-                          'Content-Type': 'application/json', 
-                        },
-                        data : body
-                    };
+                    route = 'raindrop'
+                }
+            
+                body = JSON.stringify(body);
 
-                    axios(config)
-                        .then(function (res) {
-                            if(res.data.result === true){
-                                message.channel.send(`Link saved to ${linkcat[0]}`); 
-                                return;
-                            }else{
-                                message.channel.send(`Link saved failed`); 
-                            }
-                        })
-                        .catch(function (err) {
-                            message.channel.send(`Link saved failed ${err}`); 
-                        });
-                })
-                .catch((err) => {
-                    console.log(err);
-                })
+                var config = {
+                    method: 'post',
+                    url: `${RaindropBase}${route}`,
+                    headers: { 
+                        'Authorization': `Bearer ${access_token}`, 
+                        'Content-Type': 'application/json', 
+                    },
+                    data : body
+                };
+
+                axios(config)
+                    .then(function (res) {
+                        if(res.data.result === true){
+                            message.channel.send(`Link saved to ${catTitle}`); 
+                            return;
+                        }else{
+                            message.channel.send(`Link saved failed`); 
+                        }
+                    })
+                    .catch(function (err) {
+                        message.channel.send(`Link saved failed ${err}`); 
+                    });
+            })
+            .catch((err) => {
+                console.log(err);
+            })
+    }else if(message.content.startsWith(`${prefix}token`)){
+        let new_user_access_token = message.content.substring(6).trim();
+        let newUser = await createUser(message.author.id, new_user_access_token);
+
+        if(newUser === true){
+            message.channel.send(`Accound Created, Access Token Saved`); 
+            return;
+        }else if(newUser === 1){
+            message.channel.send(`Account is already a registered user`); 
+            return;
+        }else{
+            message.channel.send(`404. There is some problem`); 
+            return;
         }
+
+    }else if(message.content.startsWith(`${prefix}test`)){
+        let text = 'Hello';
+        sendMessagePrivately(message.author.id, text)
     }
 });
+
+const sendMessagePrivately = async (discord_user_id, message) => {
+    client.users.fetch(discord_user_id, false).then((user) => {
+        user.send(message);
+    });
+}
 
 client.login(process.env.TOKEN);
 
