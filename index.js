@@ -14,8 +14,42 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.json())
 
 /* ============================= Routes to ejs templating  ============================= */
+app.use( express.static( "public" ) );
+
 app.get('/', function(req, res) {
     res.render('index');
+});
+
+app.get('/auth/callback', async function(req, res) {
+
+    var data = JSON.stringify(
+        {
+            "grant_type":"authorization_code",
+            "code": `${req.query.code}`,
+            "client_id": "602ce67ff5b1b0e7483b1132",
+            "client_secret": "7e9a5612-1c06-4dd8-9aa1-3544d2a37d09",
+            "redirect_uri": "https://linksaverbot.herokuapp.com/auth/callback"
+        }
+    );
+
+    var config = {
+        method: 'post',
+        url: 'https://raindrop.io/oauth/access_token',
+        headers: { 
+            'Content-Type': 'application/json', 
+        },
+        data : data
+    };
+
+    let access_token = await axios(config)
+        .then(function (res) {
+            return res.data.access_token;
+        })
+        .catch(function (err) {
+            return err;
+        });
+
+    res.render('callback', { access_token: `${access_token}` });
 });
 
 app.use((req, res, next) => {
