@@ -6,7 +6,17 @@ let bodyParser = require('body-parser');
 require('dotenv').config()
 
 let app = express();
+
+// set the view engine to ejs
+app.set('views', './views');
+app.set('view engine', 'ejs');
+
 app.use(bodyParser.json())
+
+/* ============================= Routes to ejs templating  ============================= */
+app.get('/', function(req, res) {
+    res.render('index');
+});
 
 app.use((req, res, next) => {
     res.status(404).send('We think you are lost!')
@@ -16,6 +26,8 @@ app.use((err, req, res, next) => {
     console.error(err.stack)
 })
 
+
+/* ============================= Discord Client Commands ============================= */
 const client = new Discord.Client();
 
 client.once('ready', () => {
