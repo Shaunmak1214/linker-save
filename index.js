@@ -141,26 +141,50 @@ client.on('message', async message => {
                 let route = null;
 
                 if(linksArr.length > 1){
-
                     let items = [];
+                    route = 'raindrops'
 
-                    linksArr.forEach(async(link) => {
+/*                     var linksToBeDone = new Promise((resolve, reject) => {
+                        linksArr.forEach( async(link, index, array) => {
+                            
+                            let pageTitle = await getTitleByUrl(link);
 
-                        let result = await getTitleByUrl(link);
-                        let pageTitle = result.ogTitle;   
+                            items.push({ 
+                                "link": `${link}`, 
+                                "title": `${pageTitle}`, 
+                                "collection": {
+                                    "$id": catId
+                                } 
+                            })
 
-                        items.push({ "link": `${link}`, "title": `${pageTitle}`, "collection": {"$id": catId} })
-                    });
+                            resolve();
+                        });
+                    }) */
 
+                    for await (const link of linksArr) {
+                        let pageTitle = await getTitleByUrl(link);
+
+                        items.push({ 
+                            "link": `${link}`, 
+                            "title": `${pageTitle}`, 
+                            "collection": {
+                                "$id": catId
+                            } 
+                        })
+                    }
                     body = {
                         items: items,
                     }
 
-                    route = 'raindrops'
+                    /* linksToBeDone.then(() => {
+                        body = {
+                            items: items,
+                        }
+                        console.log(body)
+                    }) */
                 }else{
 
-                    let result = await getTitleByUrl(linksArr[0]);
-                    let pageTitle = result.ogTitle;            
+                    let pageTitle = await getTitleByUrl(linksArr[0]);           
 
                     body = {
                         "link": `${linksArr[0]}`,
@@ -182,7 +206,7 @@ client.on('message', async message => {
                         'Authorization': `Bearer ${access_token}`, 
                         'Content-Type': 'application/json', 
                     },
-                    data : body
+                    data: body
                 };
 
                 axios(config)
