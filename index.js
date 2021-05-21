@@ -1,12 +1,12 @@
-let express = require('express');
+const express = require('express');
 const axios = require('axios');
 const Discord = require('discord.js');
-let bodyParser = require('body-parser');
+const bodyParser = require('body-parser');
 require('dotenv').config()
 
 const { prefix, RaindropBase } = require('./config.json');
 const { createUser, getAccessTokenViaDiscordId } = require('./controllers/user.controller');
-
+const { getTitleByUrl } = require('./controllers/open-graph.controller')
 // Database
 const db = require('./config/database');
 
@@ -127,7 +127,7 @@ client.on('message', async message => {
                 'Authorization': `Bearer ${access_token}`, 
             }
         })
-            .then((res) => {
+            .then(async (res) => {
                 let catId = null;
                 let catTitle = null;
                 res.data.items.map(collection => {
@@ -154,8 +154,13 @@ client.on('message', async message => {
 
                     route = 'raindrops'
                 }else{
+
+                    let result = await getTitleByUrl(linksArr[0]);
+                    let pageTitle = result.ogTitle;            
+
                     body = {
                         "link": `${linksArr[0]}`,
+                        "title": `${pageTitle}`,
                         "collection": {
                             "$id": catId
                         }
