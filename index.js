@@ -144,7 +144,7 @@ client.on('message', async message => {
 
                     let items = [];
 
-                    linksArr.forEach(link => {
+                    linksArr.forEach(async(link) => {
 
                         let result = await getTitleByUrl(link);
                         let pageTitle = result.ogTitle;   
