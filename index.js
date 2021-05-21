@@ -131,7 +131,7 @@ client.on('message', async message => {
                 let catId = null;
                 let catTitle = null;
                 res.data.items.map(collection => {
-                    if(collection.title.toLowerCase().split(/\s+/).join('') === category.toLowerCase()){
+                    if(collection.title.toLowerCase().split(/\s+/).join('') === category.toLowerCase().split(/\s+/).join('')){
                         catTitle = collection.title
                         catId = collection._id;
                     }
