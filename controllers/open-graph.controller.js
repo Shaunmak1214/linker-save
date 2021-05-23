@@ -7,7 +7,7 @@ const getTitleByUrl = async(url) => {
             const { error, result, response } = data;
 
             if(error === true){
-                return null;
+                return url;
             }else{
                 return result.ogTitle
             }
