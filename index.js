@@ -116,8 +116,21 @@ client.on('message', async message => {
         let categoryWTags = linkcat.slice(catdelimter1, catdelimter2 + 1);
         let category = categoryWTags.slice(1, -1).split(/\s+/).join('').toLowerCase()
 
+        let control = 0;
         let links = linkcat.replace(categoryWTags, "").trim()
-        let linksArr = links.split(/(\s+)/).filter( function(e) { return e.trim().length > 0; } );
+        let linksArr = links.split(/(\s+)/).filter( 
+            function(e) { 
+
+                let checkLegitUrl = e.startsWith('https://') || e.startsWith('http://');
+
+                if(!checkLegitUrl && control === 0){
+                    message.channel.send('Only valid links starts with "https or http" will be saved')
+                    control = 1;
+                }
+
+                return checkLegitUrl && e.trim().length > 0; 
+            } 
+        );
 
         /* console.log(category)
         console.log(linksArr) */
@@ -144,23 +157,6 @@ client.on('message', async message => {
                     let items = [];
                     route = 'raindrops'
 
-/*                     var linksToBeDone = new Promise((resolve, reject) => {
-                        linksArr.forEach( async(link, index, array) => {
-                            
-                            let pageTitle = await getTitleByUrl(link);
-
-                            items.push({ 
-                                "link": `${link}`, 
-                                "title": `${pageTitle}`, 
-                                "collection": {
-                                    "$id": catId
-                                } 
-                            })
-
-                            resolve();
-                        });
-                    }) */
-
                     for await (const link of linksArr) {
                         let pageTitle = await getTitleByUrl(link);
 
@@ -175,13 +171,6 @@ client.on('message', async message => {
                     body = {
                         items: items,
                     }
-
-                    /* linksToBeDone.then(() => {
-                        body = {
-                            items: items,
-                        }
-                        console.log(body)
-                    }) */
                 }else{
 
                     let pageTitle = await getTitleByUrl(linksArr[0]);           
@@ -243,6 +232,8 @@ client.on('message', async message => {
     }else if(message.content.startsWith(`${prefix}test`)){
         let text = 'Hello';
         sendMessagePrivately(message.author.id, text)
+
+        message.channel.send(`!play`);
     }
 });
 
