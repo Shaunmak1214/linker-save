@@ -12,6 +12,10 @@ const getTitleByUrl = async(url) => {
                 return result.ogTitle
             }
         })
+        .catch((err) => {
+            console.log(err)
+            return url;
+        })
 
     return results;
 }
