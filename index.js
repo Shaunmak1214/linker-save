@@ -6,6 +6,7 @@ require('dotenv').config()
 
 const { prefix, RaindropBase } = require('./config.json');
 const { createUser, getAccessTokenViaDiscordId } = require('./controllers/user.controller');
+const { createCollection} = require('./controllers/collection.controller');
 const { getTitleByUrl } = require('./controllers/open-graph.controller')
 // Database
 const db = require('./config/database');
@@ -149,6 +150,12 @@ client.on('message', async message => {
                         catId = collection._id;
                     }
                 });
+
+                if(catId === null ){
+                    newCat = await createCollection(category, access_token)
+                    catId = newCat.item._id;
+                    catTitle = newCat.item.title
+                }
 
                 let body = null;
                 let route = null;
