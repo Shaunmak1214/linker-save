@@ -98,7 +98,7 @@ app.get('/auth/callback', async function(req, res) {
 
     let tokenSaved = await createUser(discord_user_id, access_token)
         .then((res) => {
-            if(res.data === 1){
+            if(res === 1){
                 return 'User is already registered'
             }else if(res){
                 return 'Account Registered'
