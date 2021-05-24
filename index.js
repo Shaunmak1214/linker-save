@@ -150,7 +150,7 @@ client.on('message', async message => {
 
         let access_token = await getAccessTokenViaDiscordId(message.author.id)
         if(!access_token){
-            let text = "You're not authenticated, go to this link ( https://raindrop.io/oauth/authorize?redirect_uri=https://linksaverbot.herokuapp.com/auth/callback&client_id=602ce67ff5b1b0e7483b1132 ) to obtain your access token, then `token [your_access_token] to set your token to be authenticated";
+            let text = `You're not authenticated, go to this link ( https://linksaverbot.herokuapp.com/auth/redirect?discord_user_id=${message.author.id} ) to be authenticated`;
             sendMessagePrivately(message.author.id, text)
             return;
         }
