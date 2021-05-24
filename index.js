@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const Discord = require('discord.js');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 require('dotenv').config()
 
 const { prefix, RaindropBase } = require('./config.json');
@@ -24,6 +25,14 @@ db.authenticate()
   .then(() => console.log('Database connected...'))
   .catch(err => console.log('Error: ' + err))
 
+function parseCookies(str) {
+    let rx = /([^;=\s]*)=([^;]*)/g;
+    let obj = { };
+    for ( let m ; m = rx.exec(str) ; )
+        obj[ m[1] ] = decodeURIComponent( m[2] );
+    return obj;
+}
+
 let app = express();
 
 // set the view engine to ejs
@@ -32,14 +41,33 @@ app.set('view engine', 'ejs');
 
 app.use(bodyParser.json())
 
+app.use(cookieParser());
+
 /* ============================= Routes to ejs templating  ============================= */
 app.use( express.static( "public" ) );
 
 app.get('/', function(req, res) {
+
+
     res.render('index');
 });
 
+app.get('/auth/redirect', function(req, res) {
+
+    var discord_user_id = req.query.discord_user_id
+    var cookie = req.cookies.discord_user_id;
+    res.cookie('discord_user_id',discord_user_id, { maxAge: 900000, httpOnly: true });
+
+    res.writeHead(301,{
+        Location: 'https://www.google.com'
+    });
+
+    res.end();
+})
+
 app.get('/auth/callback', async function(req, res) {
+
+    let discord_user_id = parseCookies( req.headers.cookie ).discord_user_id;
 
     var data = JSON.stringify(
         {
@@ -68,7 +96,25 @@ app.get('/auth/callback', async function(req, res) {
             return err;
         });
 
-    res.render('callback', { access_token: `${access_token}` });
+    let tokenSaved = await createUser(discord_user_id, access_token)
+        .then((res) => {
+            if(res.data === 1){
+                return 'User is already registered'
+            }else if(res){
+                return 'Account Registered'
+            }else if(!res){
+                return 'Account Not Registered'
+            }
+
+            res.clearCookie('discord_user_id')
+
+        })
+        .catch((err) => {
+            console.log(err)
+            return 'An Error has occured'
+        })
+
+    res.render('callback', { access_token: `${access_token}`, token_saved: tokenSaved });
 });
 
 app.use((req, res, next) => {
