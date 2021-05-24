@@ -59,7 +59,7 @@ app.get('/auth/redirect', function(req, res) {
     res.cookie('discord_user_id',discord_user_id, { maxAge: 900000, httpOnly: true });
 
     res.writeHead(301,{
-        Location: 'https://www.google.com'
+        Location: 'https://raindrop.io/oauth/authorize?redirect_uri=https://linksaverbot.herokuapp.com/auth/callback&client_id=602ce67ff5b1b0e7483b1132'
     });
 
     res.end();
