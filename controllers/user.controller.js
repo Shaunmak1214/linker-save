@@ -1,7 +1,6 @@
 const User = require('../models/user.model');
 
 const createUser = async(discord_user_id, access_token) => {
-
     const userExisted = await User.findAll({
         where: {
             discord_user_id: `${discord_user_id}`
@@ -35,7 +34,22 @@ const getAccessTokenViaDiscordId = async (discord_id) => {
     }
 }
 
+const getUserIdViaDiscordId = async (discord_id) => {
+    const userId = await User.findAll({
+        where: {
+            discord_user_id: `${discord_id}`
+        }
+    })
+
+    if(userId.length > 0){
+        return userId[0].dataValues.user_id;
+    }else{
+        return null;
+    }
+}
+
 module.exports = {
     createUser,
-    getAccessTokenViaDiscordId
+    getAccessTokenViaDiscordId,
+    getUserIdViaDiscordId
 }

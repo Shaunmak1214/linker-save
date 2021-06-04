@@ -6,8 +6,9 @@ const cookieParser = require('cookie-parser');
 require('dotenv').config()
 
 const { prefix, RaindropBase } = require('./config.json');
-const { createUser, getAccessTokenViaDiscordId } = require('./controllers/user.controller');
+const { createUser, getAccessTokenViaDiscordId, getUserIdViaDiscordId } = require('./controllers/user.controller');
 const { createCollection} = require('./controllers/collection.controller');
+const { createShortcut, getAllShortcut, getShortcutViaInput } = require('./controllers/shortcut.controller')
 const { getTitleByUrl } = require('./controllers/open-graph.controller')
 // Database
 const db = require('./config/database');
@@ -154,6 +155,7 @@ client.on('message', async message => {
             sendMessagePrivately(message.author.id, text)
             return;
         }
+        let user_id = await getUserIdViaDiscordId(message.author.id)
 
         let linkcat = message.content.substring(2).trim();
 
@@ -162,6 +164,12 @@ client.on('message', async message => {
 
         let categoryWTags = linkcat.slice(catdelimter1, catdelimter2 + 1);
         let category = categoryWTags.slice(1, -1).split(/\s+/).join('').toLowerCase()
+
+        /* try find shortcut */
+        let categoryShortcut = await getShortcutViaInput(user_id, category);
+        if(categoryShortcut){
+            category = categoryShortcut
+        }
 
         let control = 0;
         let links = linkcat.replace(categoryWTags, "").trim()
@@ -178,9 +186,6 @@ client.on('message', async message => {
                 return checkLegitUrl && e.trim().length > 0; 
             } 
         );
-
-        /* console.log(category)
-        console.log(linksArr) */
 
         axios.get(`${RaindropBase}collections`, {
             headers: { 
@@ -281,6 +286,42 @@ client.on('message', async message => {
             message.channel.send(`404. There is some problem`); 
             return;
         }
+
+    }else if(message.content.startsWith(`${prefix}cut`)){
+
+        let access_token = await getAccessTokenViaDiscordId(message.author.id)
+        if(!access_token){
+            let text = `You're not authenticated, go to this link ( https://linksaverbot.herokuapp.com/auth/redirect?discord_user_id=${message.author.id} ) to be authenticated`;
+            sendMessagePrivately(message.author.id, text)
+            return;
+        }
+        let user_id = await getUserIdViaDiscordId(message.author.id)
+        let shortcutNotProcessed = message.content.substring(4).trim().split(" ")
+        let shortcutFrom = shortcutNotProcessed[0]
+        let shortcutTo = shortcutNotProcessed[1]
+
+        let shortcut = await createShortcut(user_id, shortcutFrom, shortcutTo);
+
+        if(shortcut === true){
+            message.channel.send(shortcut)
+        }else if(shortcut === 1){
+            message.channel.send('Shortcut already created YEARS AGO')
+        }else{
+            message.channel.send('Shortcut Saved Failed')
+        }
+
+    }else if(message.content.startsWith(`${prefix}allshortcuts`)){
+
+        let access_token = await getAccessTokenViaDiscordId(message.author.id)
+        if(!access_token){
+            let text = `You're not authenticated, go to this link ( https://linksaverbot.herokuapp.com/auth/redirect?discord_user_id=${message.author.id} ) to be authenticated`;
+            sendMessagePrivately(message.author.id, text)
+            return;
+        }
+        let user_id = await getUserIdViaDiscordId(message.author.id)
+
+        let shortcuts = await getShortcutViaInput(user_id, 'wtw')
+        console.log(shortcuts)
 
     }else if(message.content.startsWith(`${prefix}test`)){
         let text = 'Hello';
