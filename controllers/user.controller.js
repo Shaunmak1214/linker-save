@@ -73,6 +73,10 @@ const updateAllAccessToken = async(req, res) => {
                     },
                     data : data
                 };
+
+                console.log(user.dataValues.user_id)
+                console.log(res.data.access_token)
+                console.log(res.data.refresh_token)
         
                 await axios(config)
                     .then((res) => {
@@ -87,6 +91,7 @@ const updateAllAccessToken = async(req, res) => {
                                 }
                             }
                         ).then((res) => {
+                            console.log(res)
                             updatedUsers++;
                         })
                         .catch((err) => {
