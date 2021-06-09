@@ -1,5 +1,6 @@
 const { default: axios } = require('axios');
 const User = require('../models/user.model');
+require('dotenv').config()
 
 const createUser = async(discord_user_id, access_token) => {
     const userExisted = await User.findAll({
@@ -59,8 +60,8 @@ const updateAllAccessToken = async(req, res) => {
                 var data = JSON.stringify(
                     {
                         "grant_type": "refresh_token",
-                        "client_id": "602ce67ff5b1b0e7483b1132",
-                        "client_secret": "7e9a5612-1c06-4dd8-9aa1-3544d2a37d09",
+                        "client_id": `${process.env.CLIENT_ID}`,
+                        "client_secret": `${process.env.CLIENT_SECRET}`,
                         "refresh_token": `${user.dataValues.refresh_token}`
                     }
                 );

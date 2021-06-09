@@ -76,8 +76,8 @@ app.get('/auth/callback', async function(req, res) {
         {
             "grant_type": "authorization_code",
             "code": `${req.query.code}`,
-            "client_id": "602ce67ff5b1b0e7483b1132",
-            "client_secret": "7e9a5612-1c06-4dd8-9aa1-3544d2a37d09",
+            "client_id": `${process.env.CLIENT_ID}`,
+            "client_secret": `${process.env.CLIENT_SECRET}`,
             "redirect_uri": "https://linksaverbot.herokuapp.com/auth/callback"
         }
     );
