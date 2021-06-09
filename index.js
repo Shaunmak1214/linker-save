@@ -69,6 +69,8 @@ app.get('/auth/redirect', function(req, res) {
 app.get('/auth/callback', async function(req, res) {
 
     let discord_user_id = parseCookies( req.headers.cookie ).discord_user_id;
+    let access_token;
+    let refresh_token;
 
     var data = JSON.stringify(
         {
@@ -89,15 +91,16 @@ app.get('/auth/callback', async function(req, res) {
         data : data
     };
 
-    let access_token = await axios(config)
+    await axios(config)
         .then(function (res) {
-            return res.data.access_token;
+            access_token = res.data.access_token;
+            refresh_token = res.data.refresh_token;
         })
         .catch(function (err) {
-            return err;
+            access_token = err
         });
 
-    let tokenSaved = await createUser(discord_user_id, access_token)
+    let tokenSaved = await createUser(discord_user_id, access_token, refresh_token)
         .then((res) => {
             if(res === 1){
                 return 'User is already registered'
@@ -115,7 +118,7 @@ app.get('/auth/callback', async function(req, res) {
             return 'An Error has occured'
         })
 
-    res.render('callback', { access_token: `${access_token}`, token_saved: tokenSaved });
+    res.render('callback', { access_token: `${access_token}`, refresh_token: `${refresh_token}`, token_saved: tokenSaved });
 });
 
 app.use((req, res, next) => {
@@ -270,7 +273,7 @@ client.on('message', async message => {
                     });
             })
             .catch((err) => {
-                console.log(err);
+                message.channel.send(`Link saved failed ${err}`); 
             })
     }else if(message.content.startsWith(`${prefix}token`)){
         let new_user_access_token = message.content.substring(6).trim();
