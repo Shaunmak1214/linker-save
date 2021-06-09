@@ -53,8 +53,6 @@ const updateAllAccessToken = async(req, res) => {
     let updatedUsers = 0;
     const userList = await User.findAll();
 
-    console.log(userList)
-
     let updateAllUsers = new Promise((resolve, reject) => {
         userList.forEach( async(user, index, array) => {
             if(user.dataValues.refresh_token){
@@ -78,7 +76,6 @@ const updateAllAccessToken = async(req, res) => {
         
                 await axios(config)
                     .then((res) => {
-                        console.log(res.data)
                         User.update(
                             {
                                 access_token: res.data.access_token,
@@ -90,7 +87,7 @@ const updateAllAccessToken = async(req, res) => {
                                 }
                             }
                         ).then((res) => {
-                            console.log(res)
+                            console.log('user accesstoken updated')
                             updatedUsers++;
                         })
                         .catch((err) => {
