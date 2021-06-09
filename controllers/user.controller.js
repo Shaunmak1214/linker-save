@@ -73,15 +73,12 @@ const updateAllAccessToken = async(req, res) => {
                     headers: { 
                         'Content-Type': 'application/json', 
                     },
-                    data : data
+                    data: data
                 };
-
-                console.log(user.dataValues.user_id)
-                console.log(res.data.access_token)
-                console.log(res.data.refresh_token)
         
                 await axios(config)
                     .then((res) => {
+                        console.log(res.data)
                         User.update(
                             {
                                 access_token: res.data.access_token,
