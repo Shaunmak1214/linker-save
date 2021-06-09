@@ -47,9 +47,9 @@ app.use(cookieParser());
 /* ============================= Routes to ejs templating  ============================= */
 app.use( express.static( "public" ) );
 
+app.use('/v1', require('./routes/index'));
+
 app.get('/', function(req, res) {
-
-
     res.render('index');
 });
 
@@ -121,9 +121,9 @@ app.get('/auth/callback', async function(req, res) {
     res.render('callback', { access_token: `${access_token}`, refresh_token: `${refresh_token}`, token_saved: tokenSaved });
 });
 
-app.use((req, res, next) => {
+/* app.use((req, res, next) => {
     res.status(404).send('We think you are lost!')
-})
+}) */
 
 app.use((err, req, res, next) => {
     console.error(err.stack)
