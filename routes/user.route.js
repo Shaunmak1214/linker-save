@@ -5,6 +5,6 @@ const { updateAllAccessToken } = require('../controllers/user.controller')
 
 router
     .route('/')
-    .get(updateAllAccessToken())
+    .get(updateAllAccessToken)
 
 module.exports = router;
